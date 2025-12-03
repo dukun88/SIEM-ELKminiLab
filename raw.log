@@ -1,0 +1,44 @@
+Jan 12 08:12:01 fw01 kernel: IN=eth0 OUT= MAC=00:11 SRC=45.77.19.21 DST=192.168.1.10 LEN=60 TOS=0x00 PROTO=TCP SPT=443 DPT=53211
+Jan 12 08:12:03 fw01 kernel: IN=eth0 OUT= MAC=00:11 SRC=45.77.19.21 DST=192.168.1.10 LEN=60 PROTO=TCP SPT=4444 DPT=80
+Jan 12 08:12:05 fw01 kernel: IN=eth0 OUT= MAC=00:11 SRC=103.45.67.100 DST=192.168.1.15 PROTO=UDP SPT=53 DPT=56432
+
+Jan 12 08:12:10 server1 sshd[1234]: Failed password for invalid user admin from 92.241.55.10 port 49823 ssh2
+Jan 12 08:12:12 server1 sshd[1234]: Accepted password for user john from 192.168.1.50 port 51122 ssh2
+Jan 12 08:12:15 server1 sshd[1234]: Failed password for root from 92.241.55.10 port 49824 ssh2
+Jan 12 08:12:18 server1 sshd[1234]: Failed password for root from 92.241.55.10 port 49825 ssh2
+Jan 12 08:12:20 server1 sshd[1234]: Failed password for root from 92.241.55.10 port 49826 ssh2
+
+Jan 12 08:13:01 proxy squid[2222]: GET http://example.com/index.html 200 1024 - HIER_DIRECT/93.184.216.34
+Jan 12 08:13:03 proxy squid[2222]: GET http://malicious-domain.biz/update.exe 200 45823 - HIER_DIRECT/185.100.87.22
+Jan 12 08:13:05 proxy squid[2222]: POST http://bank-login.fake/auth.php 302 543 - HIER_DIRECT/203.0.113.10
+
+Jan 12 08:13:20 dnsmasq[3311]: query[A] randomsite123asd.com from 192.168.1.25
+Jan 12 08:13:22 dnsmasq[3311]: forwarded randomsite123asd.com to 8.8.8.8
+Jan 12 08:13:24 dnsmasq[3311]: reply randomsite123asd.com is 185.22.33.44
+
+Jan 12 08:14:10 suricata[999]: [1:2010935:3] ET SCAN NMAP Suspicious Scan detected {TCP} 92.241.55.10:49825 -> 192.168.1.10:22
+Jan 12 08:14:12 suricata[999]: [1:2024217:2] ET MALWARE Possible CobaltStrike Beacon {TCP} 192.168.1.15:49555 -> 203.0.113.10:4444
+Jan 12 08:14:15 suricata[999]: [1:2100498:1] ET WEB_SERVER Possible SQL Injection Attempt {TCP} 60.55.22.8:51022 -> 192.168.1.20:80
+
+Jan 12 08:15:01 web1 apache2: 192.168.1.25 - - [12/Jan/2025:08:15:01] "GET /login.php HTTP/1.1" 200 3421
+Jan 12 08:15:04 web1 apache2: 60.55.22.8 - - [12/Jan/2025:08:15:04] "GET /login.php?user=admin'-- HTTP/1.1" 500 120
+Jan 12 08:15:06 web1 apache2: 60.55.22.8 - - [12/Jan/2025:08:15:06] "POST /upload.php HTTP/1.1" 200 8000
+
+Jan 12 08:15:15 winhost Security: EventID=4625 AccountName=admin WorkstationName=DESKTOP-01 SourceNetworkAddress=92.241.55.10
+Jan 12 08:15:18 winhost Security: EventID=4624 AccountName=john WorkstationName=DESKTOP-01 SourceNetworkAddress=192.168.1.50
+Jan 12 08:15:20 winhost Security: EventID=4672 AccountName=john Privileges=SeDebugPrivilege
+
+Jan 12 08:15:30 mailserver postfix/smtpd: connect from unknown[203.0.113.20]
+Jan 12 08:15:32 mailserver postfix/smtpd: warning: unknown[203.0.113.20]: SASL LOGIN authentication failed
+Jan 12 08:15:34 mailserver postfix/smtpd: disconnect from unknown[203.0.113.20]
+
+Jan 12 08:16:01 vpn01 openvpn[888]: Peer Connection Initiated with [AF_INET]198.51.100.34:1194
+Jan 12 08:16:03 vpn01 openvpn[888]: AUTH_FAILED, user=testuser
+
+Jan 12 08:16:10 system kernel: USB disconnect, device number 4
+Jan 12 08:16:12 system kernel: new USB device found
+
+Jan 12 08:16:30 app01 app: ERROR login timeout for user admin
+Jan 12 08:16:35 app01 app: INFO user john uploaded report.pdf
+
+Jan 12 08:17:00 fw01 kernel: SRC=192.168.1.15 DST=203.0.113.10 PROTO=TCP SPT=49555 DPT=4444
