@@ -1,0 +1,8 @@
+POST _ingest/pipeline/normalize-raw/_simulate
+{
+  "docs": [
+    { "_source": { "message": "2024-12-04 10:20:30 SRC=10.0.0.1 DST=8.8.8.8 USER=admin ACTION=ALLOW" }},
+    { "_source": { "message": "192.168.1.1 - - [04/Dec/2024:10:10:10] \"GET /login HTTP/1.1\" 403 512" }},
+    { "_source": { "message": "Dec 4 10:01:21 server sshd[111]: Failed password for root from 1.1.1.1" }}
+  ]
+}
