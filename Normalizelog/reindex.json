@@ -1,6 +1,7 @@
 POST _reindex
+
 {
-  "source": { "index": "rawlog" },
+  "source": { "index": "raw-log" },
   "dest": {
     "index": "rawlog-normalized",
     "pipeline": "normalize-raw"
