@@ -1,0 +1,85 @@
+PUT _ingest/pipeline/normalize-raw
+{
+  "description": "Normalize mixed raw logs to ECS",
+  "processors": [
+
+    {
+      "grok": {
+        "field": "message",
+        "patterns": [
+          "%{TIMESTAMP_ISO8601:@timestamp} %{IP:source.ip} %{IP:destination.ip} %{DATA:message}",
+          "%{SYSLOGTIMESTAMP:syslog.timestamp} %{HOSTNAME:host.hostname} %{DATA:process.name}: %{GREEDYDATA:message}",
+          "%{COMMONAPACHELOG}",
+          "%{COMBINEDAPACHELOG}",
+          "SRC=%{IP:source.ip} DST=%{IP:destination.ip}",
+          "USER=%{USERNAME:user.name}",
+          "%{DATA}"
+        ],
+        "ignore_failure": true
+      }
+    },
+
+    {
+      "date": {
+        "field": "@timestamp",
+        "formats": ["ISO8601", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss"],
+        "ignore_failure": true
+      }
+    },
+
+    {
+      "rename": {
+        "field": "clientip",
+        "target_field": "source.ip",
+        "ignore_failure": true
+      }
+    },
+
+    {
+      "rename": {
+        "field": "verb",
+        "target_field": "http.request.method",
+        "ignore_failure": true
+      }
+    },
+
+    {
+      "rename": {
+        "field": "request",
+        "target_field": "url.original",
+        "ignore_failure": true
+      }
+    },
+
+    {
+      "rename": {
+        "field": "response",
+        "target_field": "http.response.status_code",
+        "ignore_failure": true
+      }
+    },
+
+    {
+      "geoip": {
+        "field": "source.ip",
+        "target_field": "source.geo",
+        "ignore_failure": true
+      }
+    },
+
+    {
+      "set": {
+        "field": "event.kind",
+        "value": "event"
+      }
+    },
+
+    {
+      "remove": {
+        "field": ["host"],
+        "ignore_failure": true
+      }
+    }
+
+  ]
+}
