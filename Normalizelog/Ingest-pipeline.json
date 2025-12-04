@@ -1,19 +1,32 @@
-PUT _ingest/pipeline/normalize-raw
+PUT _ingest/pipeline/soc-normalize
 {
-  "description": "Normalize mixed raw logs to ECS",
+  "description": "SOC mixed log normalization to ECS",
   "processors": [
 
     {
       "grok": {
         "field": "message",
         "patterns": [
-          "%{TIMESTAMP_ISO8601:@timestamp} %{IP:source.ip} %{IP:destination.ip} %{DATA:message}",
-          "%{SYSLOGTIMESTAMP:syslog.timestamp} %{HOSTNAME:host.hostname} %{DATA:process.name}: %{GREEDYDATA:message}",
-          "%{COMMONAPACHELOG}",
-          "%{COMBINEDAPACHELOG}",
-          "SRC=%{IP:source.ip} DST=%{IP:destination.ip}",
-          "USER=%{USERNAME:user.name}",
-          "%{DATA}"
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} kernel: .*SRC=%{IP:source.ip} DST=%{IP:destination.ip}.*PROTO=%{WORD:network.transport} SPT=%{INT:source.port} DPT=%{INT:destination.port}",
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} %{WORD:process.name}\\[%{INT:process.pid}\\]: Failed password for .* from %{IP:source.ip} port %{INT:source.port}",
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} %{WORD:process.name}\\[%{INT:process.pid}\\]: Accepted password for .* from %{IP:source.ip} port %{INT:source.port}",
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} %{WORD:process.name}\\[%{INT}\\]: (GET|POST) %{URI:url.original} %{INT:http.response.status_code}",
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} dnsmasq\\[%{INT}\\]: query\\[A\\] %{DATA:dns.question.name} from %{IP:source.ip}",
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} dnsmasq\\[%{INT}\\]: reply %{DATA:dns.question.name} is %{IP:dns.resolved_ip}",
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} suricata\\[%{INT}\\]: \\[%{DATA:rule.id}\\] %{DATA:rule.name} \\{%{WORD:network.transport}\\} %{IP:source.ip}:%{INT:source.port} -> %{IP:destination.ip}:%{INT:destination.port}",
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} Security: EventID=%{INT:event.code} AccountName=%{WORD:user.name} WorkstationName=%{WORD:host.name} SourceNetworkAddress=%{IP:source.ip}",
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} postfix/smtpd: connect from .*\\[%{IP:source.ip}\\]",
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} postfix/smtpd: warning: .*\\[%{IP:source.ip}\\]: SASL LOGIN authentication failed",
+
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} openvpn\\[%{INT}\\]: Peer Connection Initiated with .*%{IP:source.ip}:%{INT:source.port}",
+          "%{SYSLOGTIMESTAMP:temp.timestamp} %{HOSTNAME:host.hostname} openvpn\\[%{INT}\\]: AUTH_FAILED, user=%{WORD:user.name}"
         ],
         "ignore_failure": true
       }
@@ -21,41 +34,34 @@ PUT _ingest/pipeline/normalize-raw
 
     {
       "date": {
-        "field": "@timestamp",
-        "formats": ["ISO8601", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss"],
+        "field": "temp.timestamp",
+        "formats": ["MMM d HH:mm:ss", "MMM dd HH:mm:ss"],
         "ignore_failure": true
       }
     },
 
     {
-      "rename": {
-        "field": "clientip",
-        "target_field": "source.ip",
-        "ignore_failure": true
+      "set": {
+        "field": "event.module",
+        "value": "soc"
       }
     },
 
     {
-      "rename": {
-        "field": "verb",
-        "target_field": "http.request.method",
-        "ignore_failure": true
-      }
-    },
-
-    {
-      "rename": {
-        "field": "request",
-        "target_field": "url.original",
-        "ignore_failure": true
-      }
-    },
-
-    {
-      "rename": {
-        "field": "response",
-        "target_field": "http.response.status_code",
-        "ignore_failure": true
+      "script": {
+        "source": """
+        if (ctx.message.contains("Failed password")) {
+          ctx.event = ['category':'authentication','outcome':'failure'];
+        } else if (ctx.message.contains("Accepted password")) {
+          ctx.event = ['category':'authentication','outcome':'success'];
+        } else if (ctx.message.contains("CobaltStrike")) {
+          ctx.event = ['category':'malware','type':'beacon'];
+        } else if (ctx.message.contains("SQL Injection")) {
+          ctx.event = ['category':'web','type':'attack'];
+        } else if (ctx.message.contains("Suspicious Scan")) {
+          ctx.event = ['category':'intrusion_detection','type':'scan'];
+        }
+        """
       }
     },
 
@@ -68,15 +74,8 @@ PUT _ingest/pipeline/normalize-raw
     },
 
     {
-      "set": {
-        "field": "event.kind",
-        "value": "event"
-      }
-    },
-
-    {
       "remove": {
-        "field": ["host"],
+        "field": ["temp"],
         "ignore_failure": true
       }
     }
