@@ -1,0 +1,8 @@
+POST _reindex
+{
+  "source": { "index": "rawlog" },
+  "dest": {
+    "index": "rawlog-normalized",
+    "pipeline": "normalize-raw"
+  }
+}
